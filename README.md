@@ -2,14 +2,6 @@
 
 USB Midi Android Plugin is a plugin for communicate with a Midi device through USB.
 
-
-
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
-
-
 ## Usage
 
 #### Java Android
@@ -52,3 +44,7 @@ public void randomFunction()
 }
 ```
 Now you should be able to receive Midi events.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
