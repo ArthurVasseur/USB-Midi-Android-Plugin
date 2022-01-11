@@ -56,6 +56,56 @@ public class MainActivity extends AppCompatActivity {
 Now you should be able to receive Midi events.
 You can find the full code [here](./Examples/ExampleAndroidApplication).
 
+### Unity Android
+
+Create a Csharp script `MidiEventHandler` that inherits from `MonoBehaviour` and `IMidiEventHandler`.
+In the awake and start methods add these lines for instantiating the plugin : 
+```csharp
+
+private void Awake()
+{
+    gameObject.AddComponent<MidiManager>();
+}
+
+private void Start()
+{
+    MidiManager.Instance.RegisterEventHandler(this);
+}
+
+```
+Then implements all the methods of `IMidiEventHandler` :
+
+```csharp
+[SerializeField] private Text text;
+// Called when you plug a midi note is down
+public void NoteOn(int note, int velocity)
+{
+    Debug.Log("Note On " + note + " velocity " + velocity);
+    text.text += "Note On " + note + " velocity " + velocity + Environment.NewLine;
+}
+
+// Called when you plug a midi note is released
+public void NoteOff(int note)
+{
+    Debug.Log("Note off " + note);
+    text.text += "Note off " + note + Environment.NewLine;
+}
+
+// Called when you plug a midi device
+public void DeviceAttached(string deviceName)
+{
+    Debug.Log("Device Attached " + deviceName);
+    text.text += "Device Attached " + deviceName + Environment.NewLine;
+}
+// Called when you unplug a midi device
+public void DeviceDetached(string deviceName)
+{
+    Debug.Log("Device Detached " + deviceName);
+    text.text += "Device Detached " + deviceName + Environment.NewLine;
+}
+```
+
+In the editor, add a Text and add the previous script into your scene.
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
