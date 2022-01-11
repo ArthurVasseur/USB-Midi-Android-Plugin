@@ -9,3 +9,4 @@ dependencyResolutionManagement {
 rootProject.name = "USBMidiAndroid"
 include ':app'
 include ':USBMidiAndroid'
+include ':exampleandroidapplication'
