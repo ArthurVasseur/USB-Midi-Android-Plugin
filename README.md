@@ -58,6 +58,8 @@ You can find the full code [here](./Examples/ExampleAndroidApplication).
 
 ### Unity Android
 
+You can download the package [here](https://assetstore.unity.com/packages/tools/audio/usb-midi-android-plugin-211036?_ga=2.103712704.1324407781.1644182869-787380719.1640251751)
+<br>
 Create a Csharp script `MidiEventHandler` that inherits from `MonoBehaviour` and `IMidiEventHandler`.
 In the awake and start methods add these lines for instantiating the plugin : 
 ```csharp
