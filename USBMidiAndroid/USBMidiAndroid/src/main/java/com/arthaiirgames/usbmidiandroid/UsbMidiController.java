@@ -36,7 +36,6 @@ public class UsbMidiController {
 
     public void ctor(IMidiCallback callback, @NonNull Activity activity)
     {
-    {
         _context = activity.getApplicationContext();
         _midiCallback = callback;
         registerMidiDevices();
