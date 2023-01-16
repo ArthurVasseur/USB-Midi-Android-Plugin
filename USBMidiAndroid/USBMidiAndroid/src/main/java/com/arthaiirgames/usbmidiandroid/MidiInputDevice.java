@@ -47,10 +47,15 @@ public class MidiInputDevice {
                     {
                         case 0x8:
                             _midiCallback.NoteOff(byte2);
+                            break;
                         case 0x9:
-                            if(byte3 == 0x00)
+                            if(byte3 == 0x00) {
                                 _midiCallback.NoteOff(byte2);
-                            else _midiCallback.NoteOn(byte2, byte3);
+                            }
+                            else {
+                                _midiCallback.NoteOn(byte2, byte3);
+                            }
+                            break;
                     }
                 }
             }
