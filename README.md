@@ -85,6 +85,14 @@ Then implements all the methods of `IMidiEventHandler` :
 
 ```csharp
 [SerializeField] private Text text;
+// Called for all midi commands, to receive raw midi data, including before NoteOn and NoteOff
+public void RawMidi(sbyte command, sbyte data1, sbyte data2)
+{
+    string output = string.Format("MIDI command: {0:x2} {1:x2} {2:x2}", command, data1, data2);
+    Debug.Log(output);
+    text.text += output + Environment.NewLine;
+}
+   
 // Called when you plug a midi note is down
 public void NoteOn(int note, int velocity)
 {
