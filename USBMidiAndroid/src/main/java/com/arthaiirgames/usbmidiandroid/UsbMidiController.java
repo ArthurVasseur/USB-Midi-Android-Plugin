@@ -35,7 +35,6 @@ public class UsbMidiController {
     private Context _context;
     private final String USB_PERMISSION_ACTION = "com.arthaiirgames.unitymidiandroid.USB_PERMISSION_GRANTED_ACTION";
     private IMidiCallback _midiCallback = null;
-    private UsbReceiver _receiver = null;
     private HashMap<UsbDevice, ArrayList<MidiInputDevice>> _interfacesByUsbDevice = new HashMap<>();
 
     private UsbMidiController() {
@@ -44,7 +43,6 @@ public class UsbMidiController {
     public void ctor(IMidiCallback callback, @NonNull Activity activity) {
         _context = activity.getApplicationContext();
         _midiCallback = callback;
-        _receiver = new UsbReceiver();
         registerUsbReceiver();
         discoverExistingDevices();
     }
