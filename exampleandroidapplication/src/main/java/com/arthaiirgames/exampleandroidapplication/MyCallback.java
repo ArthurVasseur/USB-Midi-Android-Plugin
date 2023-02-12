@@ -12,6 +12,12 @@ public class MyCallback implements IMidiCallback {
     {
         _textView = textView;
     }
+
+    @Override
+    public void RawMidi(byte command, byte data1, byte data2) {
+        _textView.append(" MIDI command : " + command + ", " + data1 + ", " + data2 + System.lineSeparator());
+    }
+
     @Override
     public void NoteOn(int note, int velocity) {
         _textView.append(" Note : " + note + " velocity : " + velocity + System.lineSeparator());

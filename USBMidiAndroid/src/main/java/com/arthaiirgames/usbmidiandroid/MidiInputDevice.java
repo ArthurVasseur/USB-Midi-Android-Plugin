@@ -7,6 +7,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class MidiInputDevice {
     private final MidiThread _midiThread;
     private final UsbEndpoint _endpoint;
@@ -15,7 +17,7 @@ public class MidiInputDevice {
 
     public MidiInputDevice(@NonNull UsbEndpoint endpoint, @NonNull UsbDeviceConnection usbDeviceConnection, @NonNull UsbInterface usbInterface, IMidiCallback callback)
     {
-        Log.e("NEW THREAD", "new MIDI INPUT DEVICE");
+        Log.i("NEW THREAD", "new MIDI INPUT DEVICE");
         _midiThread = new MidiThread();
         _endpoint = endpoint;
         _midiCallback = callback;
@@ -23,18 +25,30 @@ public class MidiInputDevice {
         _usbDeviceConnection.claimInterface(usbInterface, true);
         _midiThread.start();
     }
+
+    public void stopThread()
+    {
+        _midiThread.stopThread();
+    }
+
     private class MidiThread extends Thread{
+
+        private AtomicBoolean _running = new AtomicBoolean(true);
 
         public MidiThread()
         {
+        }
 
+        public void stopThread()
+        {
+            _running.set(false);
         }
 
         @Override
         public void run()
         {
             byte[] receiveBuffer = new byte[_endpoint.getMaxPacketSize()];
-            while (true)
+            while (_running.get())
             {
                 int size = _usbDeviceConnection.bulkTransfer(_endpoint, receiveBuffer, _endpoint.getMaxPacketSize(), 10);
                 if (size <= 0)
@@ -43,6 +57,7 @@ public class MidiInputDevice {
                     int CIN = receiveBuffer[i] & 0xf;
                     int byte2 = receiveBuffer[i + 2] & 0xff;
                     int byte3 = receiveBuffer[i + 3] & 0xff;
+                    _midiCallback.RawMidi((byte)CIN, (byte)byte2, (byte)byte3);
                     switch (CIN)
                     {
                         case 0x8:
@@ -59,6 +74,7 @@ public class MidiInputDevice {
                     }
                 }
             }
+            Log.i("MidiThread", "Successfully stopped thread");
         }
     }
 }

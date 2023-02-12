@@ -35,7 +35,7 @@ public class UsbMidiController {
     private Context _context;
     private final String USB_PERMISSION_ACTION = "com.arthaiirgames.unitymidiandroid.USB_PERMISSION_GRANTED_ACTION";
     private IMidiCallback _midiCallback = null;
-    private ArrayList<MidiInputDevice> _interfaces = null;
+    private HashMap<UsbDevice, ArrayList<MidiInputDevice>> _interfacesByUsbDevice = new HashMap<>();
 
     private UsbMidiController() {
     }
@@ -43,34 +43,55 @@ public class UsbMidiController {
     public void ctor(IMidiCallback callback, @NonNull Activity activity) {
         _context = activity.getApplicationContext();
         _midiCallback = callback;
-        registerMidiDevices();
+        registerUsbReceiver();
+        discoverExistingDevices();
     }
 
-    public void registerMidiDevices() {
+    private void registerUsbReceiver() {
         _usbManager = (UsbManager) _context.getSystemService(Context.USB_SERVICE);
+        try {
+            PendingIntent permissionIntent = createUsbPermissionIntent();
+            IntentFilter filter = new IntentFilter(USB_PERMISSION_ACTION);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+            filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            UsbReceiver receiver = new UsbReceiver();
+            _context.registerReceiver(receiver, filter);
+        } catch (Exception e) {
+            String message = e.getMessage();
+            if (message == null)
+                Log.e("UsbMidiController", e.toString());
+            else Log.e("UsbMidiController", e.getMessage());
+        }
+    }
+
+    // Receiver will detect new devices added but on start-up we must handle existing devices
+    private void discoverExistingDevices() {
         HashMap<String, UsbDevice> map = _usbManager.getDeviceList();
         for (UsbDevice usbDevice : map.values()) {
-            try {
-                int flag;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    flag = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
-
-                } else {
-                    flag = PendingIntent.FLAG_UPDATE_CURRENT;
-                }
-                PendingIntent permissionIntent = PendingIntent.getBroadcast(_context, 0, new Intent(USB_PERMISSION_ACTION), flag);
-                IntentFilter filter = new IntentFilter(USB_PERMISSION_ACTION);
-                filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
-                filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-                _context.registerReceiver(new UsbReceiver(usbDevice), filter);
-                _usbManager.requestPermission(usbDevice, permissionIntent);
-            } catch (Exception e) {
-                String message = e.getMessage();
-                if (message == null)
-                    Log.e("UsbMidiController", e.toString());
-                else Log.e("UsbMidiController", e.getMessage());
-            }
+            requestPermissionForDevice(usbDevice);
         }
+    }
+
+    private void requestPermissionForDevice(UsbDevice usbDevice) {
+        try {
+            PendingIntent permissionIntent = createUsbPermissionIntent();
+            _usbManager.requestPermission(usbDevice, permissionIntent);
+        } catch (Exception e) {
+            String message = e.getMessage();
+            if (message == null)
+                Log.e("UsbMidiController", e.toString());
+            else Log.e("UsbMidiController", e.getMessage());
+        }
+    }
+
+    private PendingIntent createUsbPermissionIntent() {
+        int flag;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flag = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
+        } else {
+            flag = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
+        return PendingIntent.getBroadcast(_context, 0, new Intent(USB_PERMISSION_ACTION), flag);
     }
 
     @Nullable
@@ -103,27 +124,43 @@ public class UsbMidiController {
         return null;
     }
 
-    private class UsbReceiver extends BroadcastReceiver {
-        private final UsbDevice _usbDevice;
+    private void addMidiInputDevices(UsbDevice device, ArrayList<MidiInputDevice> interfaces) {
+        _interfacesByUsbDevice.put(device, interfaces);
+    }
 
-        public UsbReceiver(UsbDevice usbDevice) {
-            _usbDevice = usbDevice;
+    private void removeMidiInputDevices(UsbDevice device) {
+        ArrayList<MidiInputDevice> interfaces = _interfacesByUsbDevice.remove(device);
+        if (interfaces != null)
+        {
+            for (int i = 0; i < interfaces.size(); i++) {
+                interfaces.get(i).stopThread();
+            }
         }
+    }
 
+    private class UsbReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            UsbDevice usbDevice = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
             String action = intent.getAction();
             if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                 if (USB_PERMISSION_ACTION.equals(action)) {
-                    _interfaces = getAllMidiInterfaces(_usbDevice);
+                    // Get MIDI interfaces (if any)
+                    ArrayList<MidiInputDevice> interfaces = getAllMidiInterfaces(usbDevice);
+                    if (interfaces.size() > 0)
+                    {
+                        removeMidiInputDevices(usbDevice);
+                        addMidiInputDevices(usbDevice, interfaces);
+                        _midiCallback.DeviceAttached(usbDevice.getDeviceName());
+                    }
                 }
             }
             if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                _midiCallback.DeviceDetached(_usbDevice.getDeviceName());
+                removeMidiInputDevices(usbDevice);
+                _midiCallback.DeviceDetached(usbDevice.getDeviceName());
             }
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                _midiCallback.DeviceAttached(_usbDevice.getDeviceName());
-                registerMidiDevices();
+                requestPermissionForDevice(usbDevice);
             }
         }
     }
