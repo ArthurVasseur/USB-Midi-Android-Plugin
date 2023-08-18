@@ -22,10 +22,10 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --scan
       - name: Run ls
-        run: ls -laR ./USBMidiAndroid
+        run: ls -laR ./USBMidiAndroid/build
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist-build
           path: |
-            ./USBMidiAndroid\build\outputs\
+            ./USBMidiAndroid/build
