@@ -28,4 +28,4 @@ jobs:
         with:
           name: dist-build
           path: |
-            USBMidiAndroid\build\outputs\
+            ./USBMidiAndroid\build\outputs\
