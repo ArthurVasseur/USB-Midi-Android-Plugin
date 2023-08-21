@@ -93,14 +93,14 @@ public void RawMidi(sbyte command, sbyte data1, sbyte data2)
     text.text += output + Environment.NewLine;
 }
    
-// Called when you plug a midi note is down
+// Called when a midi note is pressed
 public void NoteOn(int note, int velocity)
 {
     Debug.Log("Note On " + note + " velocity " + velocity);
     text.text += "Note On " + note + " velocity " + velocity + Environment.NewLine;
 }
 
-// Called when you plug a midi note is released
+// Called when a midi note is released
 public void NoteOff(int note)
 {
     Debug.Log("Note off " + note);
